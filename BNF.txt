@@ -1,0 +1,19 @@
+
+Backus-Naur Form (BNF) of bahasa-singkat
+
+<petik tunggal>       ::= "'"
+<boolean>             ::= "benar" | "salah"
+<angka>               ::= "0" | "1" | ... | "8" | "9"
+<operator>            ::= "+" | "-" | "*" | "/"
+<karakter>            ::= ASCII PRINTABLE CHARACTER (decimal = 32 -> decimal = 126)
+<larik karakter>      ::= <karakter> | <larik karakter>
+<untaian>             ::= <petik tunggal> <larik karakter> <petik tunggal>
+
+<bilangan asli>       ::= <angka> | <bilangan asli>
+<bilangan bulat>      ::= "-"<bilangan asli> | <bilangan asli>
+
+<arithmetic>          ::= <bilangan bulat> <operator> <bilangan bulat>
+<boolean>             ::= <arithmetic> "<" <arithmetic> | <arithmetic> ">" <arithmetic> | <arithmetic> "=" <arithmetic>
+<print statement>     ::= "tampilkan" <untaian>
+<variable assignment> ::=  "diberikan" <untaian> "adalah" <bilangan bulat> | "diberikan" <untaian> "adalah" <untaian>
+<condition>           ::= "jika" <boolean> "maka" <print statement>
