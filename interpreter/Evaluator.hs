@@ -1,6 +1,7 @@
 module Evaluator where
 
 import Control.Applicative
+import Data.Bool
 
 import Parser
 
@@ -10,17 +11,53 @@ import Parser
 {- +===============================+ -}
 
 
-evaluate :: Parser String
-evaluate = aritmatika <|> tampilkan <|> kondisi
+-- 
+-- NOTE: in order to prevent collision, evaluation will take the first word
+--       and decide which method to run in order to prevent Parsing error
+-- 
+getFirstWord :: String -> String
+getFirstWord (x:xs) = if alfabet x then x : getFirstWord xs else []
+
+{- Evaluation function  -}
+evaluate = \input -> do
+  if (getFirstWord input) == "tampilkan" then
+    parse (tampilkan) input
+  else if (getFirstWord input) == "jika" then
+    parse (kondisi) input
+  else
+    parse (aritmatika) input
+
+{- variable datatype for evaluation -}
+data VariableValue = INT_VAR String Int | STR_VAR String String | ERROR deriving (Show, Eq)
+
+{- Auxiliary functions for evaluation -}
+checkParserTypeForFilter :: Maybe(VariableValue, String) -> Bool
+checkParserTypeForFilter Nothing = False
+checkParserTypeForFilter (Just (ERROR, _)) = False
+checkParserTypeForFilter (Just(INT_VAR s i, _)) = True
+checkParserTypeForFilter (Just(STR_VAR s i, _)) = True
+
+-- Function for filter()
+checkVariableByName :: Maybe(VariableValue, String) -> String -> Bool
+checkVariableByName Nothing key = False
+checkVariableByName (Just (ERROR, _)) key = False
+checkVariableByName (Just (INT_VAR s _, _)) key | key == s  = True
+                                                | otherwise = False
+checkVariableByName (Just (STR_VAR s _, _)) key | key == s  = True
+                                                | otherwise = False
+
+-- Obtain variable by name
+getVariableByName :: [Maybe(VariableValue, String)] -> String -> Maybe(VariableValue, String)
+getVariableByName listOfVariables key = head $ filter (\var -> checkVariableByName var key) listOfVariables
 
 
 --
 -- BNF for aritmatika (arithmetic)
 --
--- aritmatika ::= lpred
--- lpred      ::= hpred + lpred | hpred - lpred | hpred
--- hpred      ::= factor * hpred | factor / hpred | factor
--- factor     ::= (lpred) | bilanganAsli
+-- <aritmatika> ::= <lpred>
+-- <lpred>      ::= <hpred> + <lpred> | <hpred> - <lpred> | <hpred>
+-- <hpred>      ::= <factor> * <hpred> | <factor> / <hpred> | <factor>
+-- <factor>     ::= '(' <lpred> ')' | <bilanganAsli>
 
 -- Lower precedence
 lpred :: Parser Int
@@ -97,7 +134,7 @@ aritmatika = do
 --
 -- BNF for boolean operation
 -- 
--- boolean = aritmatika '<' aritmatika | aritmatika '>' aritmatika | aritmatika '=' aritmatika
+-- <boolean> = <aritmatika> '<' <aritmatika> | <aritmatika> '>' <aritmatika> | <aritmatika> '=' <aritmatika>
 --
 applyBoolean :: Parser Bool
 applyBoolean = do
@@ -156,13 +193,40 @@ tampilkan = do
   spasi
   s <- untaian
   if perintah == "tampilkan" then return s else return ""
-  <|> return ""
+  <|> return "ERROR: error occured in `tampilkan` statement"
+
+
+--
+-- BNF for variable assignment
+--
+-- variabel ::= "diberikan" <alfabet> "adalah" <bilanganAsli> | "diberikan" <alfabet> "adalah" <untaian>
+--
+variabel :: Parser VariableValue
+variabel = do
+  katakunci1 <- kataKunci
+  spasi
+  namavariabel <- some (satisfy alfabet)
+  spasi
+  katakunci2 <- kataKunci
+  spasi
+  n <- bilanganAsli
+  if (katakunci1 == "diberikan") && (katakunci2 == "adalah") then return $ INT_VAR namavariabel n else return ERROR
+  <|> do
+  katakunci1 <- kataKunci
+  spasi
+  namavariabel <- some (satisfy alfabet)
+  spasi
+  katakunci2 <- kataKunci
+  spasi
+  s <- untaian
+  if (katakunci1 == "diberikan") && (katakunci2 == "adalah") then return $ STR_VAR namavariabel s else return ERROR
+  <|> return ERROR
 
 
 --
 -- BNF for if else statement
 --
--- kondisi ::= "jika" boolean "maka" tampilkan
+-- kondisi ::= "jika" <boolean> "maka" <tampilkan>
 --
 kondisi :: Parser String
 kondisi = do
@@ -174,4 +238,13 @@ kondisi = do
   spasi
   result <- tampilkan
   if (katakunci1 == "jika") && (bool == True) && (katakunci2 == "maka") then return result else return ""
-  <|> return ""
+  <|> do
+  katakunci1 <- kataKunci
+  spasi
+  bool <- boolean
+  spasi
+  katakunci2 <- kataKunci
+  spasi
+  result <- aritmatika
+  if (katakunci1 == "jika") && (bool == True) && (katakunci2 == "maka") then return result else return ""
+  <|> return "ERROR: error occured in `jika` statement"

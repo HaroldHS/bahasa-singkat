@@ -1,2 +1,3 @@
 tampilkan 'Hello, World!'
+jika 1=1 maka tampilkan '1 adalaha 1'
 jika 1<2 maka tampilkan 'Iya, 1 lebih kecil dari 2'

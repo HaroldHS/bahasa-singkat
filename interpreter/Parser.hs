@@ -68,10 +68,18 @@ karakter c | c `elem` ['0' .. '9']                   = True
 
 -- Preserved keyword
 kata s | s == "tampilkan" = True
-       | s == "berikan"   = True
+       | s == "diberikan" = True
+       | s == "adalah"    = True
        | s == "jika"      = True
        | s == "maka"      = True
        | otherwise        = False
+
+-- Allowed characters for variable name
+karakterVariabel c | c `elem` ['a' .. 'z'] = True
+                   | c `elem` ['A' .. 'Z'] = True
+                   | c `elem` ['0' .. '9'] = True
+                   | c == '_'              = True
+                   | otherwise             = False 
 
 {- Parser methods -}
 spasi :: Parser String
@@ -108,4 +116,7 @@ kataKunci = do
   target <- some (satisfy alfabet)
   if kata target then return (target) else return ""
 
-
+namaVariabel :: Parser String
+namaVariabel = do
+  result <- some (satisfy karakterVariabel)
+  return result

@@ -1,2 +1,2 @@
 # bahasa-singkat
-Bahasa Singkat is a small scale and compact programming language for beginners.
+Bahasa Singkat (BaSing) is a small scale and compact programming language for beginners.
