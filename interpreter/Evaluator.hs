@@ -27,29 +27,6 @@ evaluate = \input -> do
   else
     parse (aritmatika) input
 
-{- variable datatype for evaluation -}
-data VariableValue = INT_VAR String Int | STR_VAR String String | ERROR deriving (Show, Eq)
-
-{- Auxiliary functions for evaluation -}
-checkParserTypeForFilter :: Maybe(VariableValue, String) -> Bool
-checkParserTypeForFilter Nothing = False
-checkParserTypeForFilter (Just (ERROR, _)) = False
-checkParserTypeForFilter (Just(INT_VAR s i, _)) = True
-checkParserTypeForFilter (Just(STR_VAR s i, _)) = True
-
--- Function for filter()
-checkVariableByName :: Maybe(VariableValue, String) -> String -> Bool
-checkVariableByName Nothing key = False
-checkVariableByName (Just (ERROR, _)) key = False
-checkVariableByName (Just (INT_VAR s _, _)) key | key == s  = True
-                                                | otherwise = False
-checkVariableByName (Just (STR_VAR s _, _)) key | key == s  = True
-                                                | otherwise = False
-
--- Obtain variable by name
-getVariableByName :: [Maybe(VariableValue, String)] -> String -> Maybe(VariableValue, String)
-getVariableByName listOfVariables key = head $ filter (\var -> checkVariableByName var key) listOfVariables
-
 
 --
 -- BNF for aritmatika (arithmetic)
@@ -197,33 +174,6 @@ tampilkan = do
 
 
 --
--- BNF for variable assignment
---
--- variabel ::= "diberikan" <alfabet> "adalah" <bilanganAsli> | "diberikan" <alfabet> "adalah" <untaian>
---
-variabel :: Parser VariableValue
-variabel = do
-  katakunci1 <- kataKunci
-  spasi
-  namavariabel <- some (satisfy alfabet)
-  spasi
-  katakunci2 <- kataKunci
-  spasi
-  n <- bilanganAsli
-  if (katakunci1 == "diberikan") && (katakunci2 == "adalah") then return $ INT_VAR namavariabel n else return ERROR
-  <|> do
-  katakunci1 <- kataKunci
-  spasi
-  namavariabel <- some (satisfy alfabet)
-  spasi
-  katakunci2 <- kataKunci
-  spasi
-  s <- untaian
-  if (katakunci1 == "diberikan") && (katakunci2 == "adalah") then return $ STR_VAR namavariabel s else return ERROR
-  <|> return ERROR
-
-
---
 -- BNF for if else statement
 --
 -- kondisi ::= "jika" <boolean> "maka" <tampilkan>
@@ -237,14 +187,5 @@ kondisi = do
   katakunci2 <- kataKunci
   spasi
   result <- tampilkan
-  if (katakunci1 == "jika") && (bool == True) && (katakunci2 == "maka") then return result else return ""
-  <|> do
-  katakunci1 <- kataKunci
-  spasi
-  bool <- boolean
-  spasi
-  katakunci2 <- kataKunci
-  spasi
-  result <- aritmatika
   if (katakunci1 == "jika") && (bool == True) && (katakunci2 == "maka") then return result else return ""
   <|> return "ERROR: error occured in `jika` statement"
