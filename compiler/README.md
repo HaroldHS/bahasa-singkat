@@ -26,5 +26,7 @@ ghci> main
 ghci>:q
 
 # 5. Run virtual machine
-go run VirtualMachine.go result.bsr
+go run VirtualMachine.go ./example/result.bsr
 ```
+
+> NOTE: As BaSing only support integer number, not floating number, there should be no arithmetic operation which result in zero division. If so, the program would crash
