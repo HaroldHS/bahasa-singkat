@@ -4,22 +4,25 @@ import Control.Applicative
 import Data.Bool
 
 {- Datatype for bytecode generation -}
-data Bytecode = DO_NOTHING | BILANGAN Int
-                           | UNTAIAN String
-                           | VARIABEL_BILANGAN String Int
-                           | VARIABEL_UNTAIAN String String
-                           | TAMPILKAN String
-                           | TAMBAH
-                           | KURANG
-                           | KALI
-                           | BAGI
-                           | LEBIH_KECIL
-                           | LEBIH_BESAR
-                           | SAMA_DENGAN
-                           | BENAR
-                           | SALAH
-                           | ERROR String
-                           deriving (Show, Eq)
+data Bytecode = RETURN | DO_NOTHING
+                       | PUSH Int
+                       | BILANGAN Int
+                       | UNTAIAN String
+                       | VARIABEL_BILANGAN String Int
+                       | VARIABEL_UNTAIAN String String
+                       | TAMPILKAN String
+                       | TAMPILKAN_FROM_STACK
+                       | TAMBAH
+                       | KURANG
+                       | KALI
+                       | BAGI
+                       | LEBIH_KECIL
+                       | LEBIH_BESAR
+                       | SAMA_DENGAN
+                       | BENAR
+                       | SALAH
+                       | ERROR String
+                       deriving (Show, Eq)
 
 {- +================+ -}
 {- | Parser section | -}

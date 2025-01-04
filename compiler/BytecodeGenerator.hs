@@ -91,7 +91,7 @@ factor = do
   return [BILANGAN result]
   <|> do
   result <- bilanganAsli
-  return [BILANGAN result]
+  return [PUSH result]
 
 aritmatika :: Parser [Bytecode]
 aritmatika = do
@@ -107,6 +107,11 @@ tampilkan = do
   spasi
   s <- untaian
   if perintah == "tampilkan" then return [TAMPILKAN s] else return [DO_NOTHING]
+  <|> do
+  perintah <- kataKunci
+  spasi
+  result <- aritmatika
+  if perintah == "tampilkan" then return $ concat [[TAMPILKAN_FROM_STACK, RETURN], result] else return [DO_NOTHING]
   <|> return [ERROR "ERROR: error occured in `tampilkan` statement"]
 
 

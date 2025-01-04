@@ -17,6 +17,6 @@ main = do
   outFileName <- getLine
 
   let results = map (\input -> getParserResult $ generate input) (lines fileContent)
-  mapM_ (\each_bytecode -> if each_bytecode /= [] then bytecodeListToFile outFileName (reverse each_bytecode) else appendFile outFileName "") results
+  mapM_ (\each_bytecode -> if each_bytecode /= [] then bytecodeListToFile outFileName each_bytecode else appendFile outFileName "") results
 
   return ()
