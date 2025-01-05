@@ -129,7 +129,7 @@ tampilkan = do
 
 variabel :: Parser [Bytecode]
 variabel = do
-  -- TODO: Fix collosion below
+  -- TODO: Fix collision below
   {-
   katakunci1 <- kataKunci
   spasi
