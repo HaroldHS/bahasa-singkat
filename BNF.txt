@@ -3,6 +3,7 @@ Backus-Naur Form (BNF) of bahasa-singkat
 
 <petik tunggal>       ::= "'"
 <boolean>             ::= "benar" | "salah"
+<alfabet>             ::= "a" | ... | "z" | "A" | ... | "Z"
 <angka>               ::= "0" | "1" | ... | "8" | "9"
 <operator>            ::= "+" | "-" | "*" | "/"
 <karakter>            ::= ASCII PRINTABLE CHARACTER (decimal = 32 -> decimal = 126)
@@ -12,8 +13,13 @@ Backus-Naur Form (BNF) of bahasa-singkat
 <bilangan asli>       ::= <angka> | <bilangan asli>
 <bilangan bulat>      ::= "-"<bilangan asli> | <bilangan asli>
 
-<arithmetic>          ::= <bilangan bulat> <operator> <bilangan bulat>
-<boolean>             ::= <arithmetic> "<" <arithmetic> | <arithmetic> ">" <arithmetic> | <arithmetic> "=" <arithmetic>
+<variabel>            ::= "variabel" <alfabet>
+
+<arithmetic>          ::= <bilangan bulat> <operator> <bilangan bulat> | <variabel> <operator> <bilangan bulat>
+                                                                       | <bilangan bulat> <operator> <variabel>
+                                                                       | <variabel> <operator> <variabel>
+<boolean>             ::= <arithmetic> "<" <arithmetic> | <arithmetic> ">" <arithmetic>
+                                                        | <arithmetic> "=" <arithmetic>
 <print statement>     ::= "tampilkan" <untaian>
 <variable assignment> ::=  "diberikan" <untaian> "adalah" <bilangan bulat> | "diberikan" <untaian> "adalah" <untaian>
 <condition>           ::= "jika" <boolean> "maka" <print statement>

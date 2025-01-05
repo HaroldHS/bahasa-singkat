@@ -8,8 +8,10 @@ data Bytecode = RETURN | DO_NOTHING
                        | PUSH Int
                        | BILANGAN Int
                        | UNTAIAN String
-                       | VARIABEL_BILANGAN String Int
-                       | VARIABEL_UNTAIAN String String
+                       | SET_VARIABEL_BILANGAN String Int
+                       | SET_VARIABEL_UNTAIAN String String
+                       | GET_VARIABEL_BILANGAN String
+                       | GET_VARIABEL_UNTAIAN String
                        | TAMPILKAN String
                        | TAMPILKAN_FROM_STACK
                        | TAMBAH
@@ -89,6 +91,7 @@ karakter c | c `elem` ['0' .. '9']                   = True
 -- Preserved keyword
 kata s | s == "tampilkan" = True
        | s == "diberikan" = True
+       | s == "variabel"  = True
        | s == "adalah"    = True
        | s == "jika"      = True
        | s == "maka"      = True

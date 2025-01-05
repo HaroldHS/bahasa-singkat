@@ -1,3 +1,5 @@
+diberikan umur adalah 24
+diberikan pesan_masuk adalah 'Umur anda: '
 tampilkan 'Hello, World!'
-diberikan nama adalah 'bahasa program'
-tampilkan 1 + 2 * 3 - 4
+tampilkan variabel pesan_masuk
+tampilkan variabel umur - 2 * 3

@@ -38,7 +38,33 @@ func (s *Stack) isEmpty() bool {
 	return false
 }
 
-/* Virtual Memory implementation for variable assignment */
+/* 
+ * Virtual Memory implementation with simple dictionary for variable assignment.
+ *
+ * TODO: Add concurrency handler for preventing race condition.
+ *
+ */
+type VirtualMemory struct {
+	bilangan map[string]int
+	untaian  map[string]string
+}
+
+func (m *VirtualMemory) InsertBilangan(key string, value string) {
+	intValue, _ := strconv.Atoi(value)
+	m.bilangan[key] = intValue
+}
+
+func (m *VirtualMemory) InsertUntaian(key string, value string) {
+	m.untaian[key] = value
+}
+
+func (m *VirtualMemory) DeleteBilangan(key string) {
+	delete(m.bilangan, key)
+}
+
+func (m *VirtualMemory) DeleteUntaian(key string) {
+	delete(m.untaian, key)
+}
 
 
 /* Auxiliary function */
@@ -190,11 +216,9 @@ func assemblyPrintFunction (stringData string) {
 	 * NOTE: As golang mmap() is different from C mmap(), string is inserted inside the bytecode instead
 	 *       of accessing the string address from RSI register directly when calling the mmap function.
 	 *
-	 *
 	 * C example:
 	 *
 	 * typedef void(*printFunction)(char *msg, size_t msg_len)
-	 *
 	 * void assemblyPrintFunction(char *msg) {
 	 *   char opcode[]     = ".....";   <- contains instruction with accessing RSI and RDX
 	 *   size_t opcode_len = strlen(opcode);
@@ -206,7 +230,6 @@ func assemblyPrintFunction (stringData string) {
 	 *
 	 *   memcpy(code, opcode, opcode_len);
 	 *   ((printFunction)code)(msg, msg_len);
-	 *
 	 * }
 	 *
 	 */
@@ -287,6 +310,11 @@ func main () {
 	}
 
 	var virtualStack Stack
+	var virtualMemory VirtualMemory
+
+	// Initialize virtual memory
+	virtualMemory.bilangan = make(map[string]int)
+	virtualMemory.untaian  = make(map[string]string)
 
 	for _, content := range fileContents {
 		// Insert bytecode into virtual memory
@@ -321,6 +349,20 @@ func main () {
 					stringValue := value[1:len(value)-1] // take the string value inside '
 					assemblyPrintFunction(stringValue)
 					currentBytecodes = currentBytecodes[:0]
+				} else if status && ((instruction == "SET_VARIABEL_BILANGAN") || (instruction == "SET_VARIABEL_UNTAIAN")) {
+					pair := strings.SplitN(value, " ", 2)
+					pairKey, pairValue := pair[0], pair[1]
+					pairKey = pairKey[1:len(pairKey)-1]       // remove '
+
+					if instruction == "SET_VARIABEL_BILANGAN" {
+						virtualMemory.InsertBilangan(pairKey, pairValue)
+					}
+				} else if status && ((instruction == "GET_VARIABEL_BILANGAN") || (instruction == "GET_VARIABEL_UNTAIAN")){
+					namaVariabel := value[1:len(value)-1]
+
+					if instruction == "GET_VARIABEL_BILANGAN" {
+						virtualStack.Push("PUSH " + strconv.Itoa(virtualMemory.bilangan[namaVariabel]))
+					}
 				} else {
 					currentBytecodes = append(currentBytecodes, compileBytecodeToAssembly(instruction, value)...)
 				}

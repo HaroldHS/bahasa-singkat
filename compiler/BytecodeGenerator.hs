@@ -90,6 +90,11 @@ factor = do
   satisfy (==')')
   return [BILANGAN result]
   <|> do
+  katakunci <- kataKunci
+  spasi
+  namavariabel <- namaVariabel
+  if katakunci == "variabel" then return [GET_VARIABEL_BILANGAN namavariabel] else return [DO_NOTHING]
+  <|> do
   result <- bilanganAsli
   return [PUSH result]
 
@@ -112,20 +117,20 @@ tampilkan = do
   spasi
   result <- aritmatika
   if perintah == "tampilkan" then return $ concat [[TAMPILKAN_FROM_STACK, RETURN], result] else return [DO_NOTHING]
+  <|> do
+  perintah <- kataKunci
+  spasi
+  perintah2 <- kataKunci
+  spasi
+  namavariabel <- namaVariabel
+  if (perintah == "tampilkan") && (perintah2 == "variabel") then return [TAMPILKAN namavariabel] else return [DO_NOTHING]
   <|> return [ERROR "ERROR: error occured in `tampilkan` statement"]
 
 
 variabel :: Parser [Bytecode]
 variabel = do
-  katakunci1 <- kataKunci
-  spasi
-  namavariabel <- some (satisfy alfabet)
-  spasi
-  katakunci2 <- kataKunci
-  spasi
-  n <- bilanganAsli
-  if (katakunci1 == "diberikan") && (katakunci2 == "adalah") then return [VARIABEL_BILANGAN namavariabel n] else return [DO_NOTHING]
-  <|> do
+  -- TODO: Fix collosion below
+  {-
   katakunci1 <- kataKunci
   spasi
   namavariabel <- some (satisfy alfabet)
@@ -133,5 +138,15 @@ variabel = do
   katakunci2 <- kataKunci
   spasi
   s <- untaian
-  if (katakunci1 == "diberikan") && (katakunci2 == "adalah") then return [VARIABEL_UNTAIAN namavariabel s] else return [DO_NOTHING]
+  if (katakunci1 == "diberikan") && (katakunci2 == "adalah") then return [SET_VARIABEL_UNTAIAN namavariabel s] else return [DO_NOTHING]
+  <|> do
+  -}
+  katakunci1 <- kataKunci
+  spasi
+  namavariabel <- namaVariabel
+  spasi
+  katakunci2 <- kataKunci
+  spasi
+  n <- bilanganAsli
+  if (katakunci1 == "diberikan") && (katakunci2 == "adalah") then return [SET_VARIABEL_BILANGAN namavariabel n] else return [DO_NOTHING]
   <|> return [ERROR "ERROR: error occured in `diberikan` statement"]

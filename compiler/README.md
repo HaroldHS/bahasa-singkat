@@ -29,4 +29,4 @@ ghci>:q
 go run VirtualMachine.go ./example/result.bsr
 ```
 
-> NOTE: As BaSing only support integer number, not floating number, there should be no arithmetic operation which result in zero division. If so, the program would crash
+> NOTE: As BaSing only support integer number, not floating number, there should be no arithmetic operation which result in zero division(e.g. 4/5) or fractional number . If so, the program could crash or print invalid number
