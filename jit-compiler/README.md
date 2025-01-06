@@ -2,13 +2,14 @@
 
 Bahasa Singkat Compiler (BaSiCl) is a small compiler (JIT compiler) that compile Bahasa Singkat programming language from a given input/file.
 Bahasa Singkat Compiler works by parsing the input/file according to the BNF of Bahasa Singkat programming language, create bytecode/intermediate representation (IR) of it.
-Later on, the result of the IR/Bytecode generation could be executed by virtual machine which is written in Golang.
+Later on, the result of the IR/Bytecode generation could be executed by an engine which is written in Golang.
 
-### Sytem & Software Requirements
-
-* Linux x86-64
+### Software Requirements
 * GHCI
 * Golang
+
+### Supported systems
+* Linux x86-64
 
 ### How to run
 

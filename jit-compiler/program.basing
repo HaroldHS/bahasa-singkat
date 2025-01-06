@@ -1,5 +1,5 @@
 diberikan umur adalah 24
-diberikan pesan_masuk adalah 'Umur anda: '
 tampilkan 'Hello, World!'
-tampilkan variabel pesan_masuk
 tampilkan variabel umur - 2 * 3
+jika variabel umur = 24 maka tampilkan 'Masih muda'
+jika variabel umur < 15 maka tampilkan 'Berarti anak kecil'

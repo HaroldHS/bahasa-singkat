@@ -25,6 +25,8 @@ generate = \input -> do
     parse (tampilkan) input
   else if (getFirstWord input) == "diberikan" then
     parse (variabel) input
+  else if (getFirstWord input) == "jika" then
+    parse (kondisi) input
   else
     parse (aritmatika) input
 
@@ -103,6 +105,49 @@ aritmatika = do
   result <- lpred
   return result
 
+applyBoolean :: Parser [Bytecode]
+applyBoolean = do
+  n1 <- aritmatika
+  satisfy (=='<')
+  n2 <- aritmatika
+  return $ concat [[LEBIH_KECIL], n1, n2]
+  <|> do
+  n1 <- aritmatika
+  satisfy (=='>')
+  n2 <- aritmatika
+  return $ concat [[LEBIH_BESAR], n1, n2]
+  <|> do
+  n1 <- aritmatika
+  satisfy (=='=')
+  n2 <- aritmatika
+  return $ concat [[SAMA_DENGAN], n1, n2]
+  <|> do
+  n1 <- aritmatika
+  spasi
+  satisfy (=='<')
+  spasi
+  n2 <- aritmatika
+  return $ concat [[LEBIH_KECIL], n1, n2]
+  <|> do
+  n1 <- aritmatika
+  spasi
+  satisfy (=='>')
+  spasi
+  n2 <- aritmatika
+  return $ concat [[LEBIH_BESAR], n1, n2]
+  <|> do
+  n1 <- aritmatika
+  spasi
+  satisfy (=='=')
+  spasi
+  n2 <- aritmatika
+  return $ concat [[SAMA_DENGAN], n1, n2]
+  <|> return [SALAH]
+
+boolean :: Parser [Bytecode]
+boolean = do
+  result <- applyBoolean
+  return result
 
 {- Command functions below -}
 
@@ -150,3 +195,16 @@ variabel = do
   n <- bilanganAsli
   if (katakunci1 == "diberikan") && (katakunci2 == "adalah") then return [SET_VARIABEL_BILANGAN namavariabel n] else return [DO_NOTHING]
   <|> return [ERROR "ERROR: error occured in `diberikan` statement"]
+
+
+kondisi :: Parser [Bytecode]
+kondisi = do
+  katakunci1 <- kataKunci
+  spasi
+  bool <- boolean
+  spasi
+  katakunci2 <- kataKunci
+  spasi
+  result <- tampilkan
+  if (katakunci1 == "jika") && (katakunci2 == "maka") then return $ concat [[END_IF], result, bool] else return [DO_NOTHING]
+  <|> return [ERROR "ERROR: error occured in `jika` statement"]

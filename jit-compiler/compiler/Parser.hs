@@ -23,6 +23,7 @@ data Bytecode = RETURN | DO_NOTHING
                        | SAMA_DENGAN
                        | BENAR
                        | SALAH
+                       | END_IF
                        | ERROR String
                        deriving (Show, Eq)
 
