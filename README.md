@@ -5,7 +5,7 @@ Compiler (JIT compiler) and Interpreter are provided in order to give a better c
 > NOTE: Since the interpreter is written in Haskell, variable assignment/memory allocation is not supported. If you want to use variable / save something in the program, using the compiler is a must.
 
 ### System & Software Requirements
-* Linux, x86-64 architecture
+* Linux x86-64
 * GHCI
 * Golang
 
