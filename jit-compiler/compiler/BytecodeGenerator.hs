@@ -27,6 +27,8 @@ generate = \input -> do
     parse (variabel) input
   else if (getFirstWord input) == "jika" then
     parse (kondisi) input
+  else if (getFirstWord input) == "pengulangan" then
+    parse (pengulangan) input
   else
     parse (aritmatika) input
 
@@ -90,7 +92,7 @@ factor = do
   satisfy (=='(')
   result <- bilanganAsli
   satisfy (==')')
-  return [BILANGAN result]
+  return [PUSH result]
   <|> do
   katakunci <- kataKunci
   spasi
@@ -206,5 +208,20 @@ kondisi = do
   katakunci2 <- kataKunci
   spasi
   result <- tampilkan
-  if (katakunci1 == "jika") && (katakunci2 == "maka") then return $ concat [[END_IF], result, bool] else return [DO_NOTHING]
+  if (katakunci1 == "jika") && (katakunci2 == "maka") then return $ concat [[END_BLOCK], result, bool] else return [DO_NOTHING]
   <|> return [ERROR "ERROR: error occured in `jika` statement"]
+
+pengulangan :: Parser [Bytecode]
+pengulangan = do
+  katakunci1 <- kataKunci
+  spasi
+  katakunci2 <- kataKunci
+  spasi
+  jumlah <- aritmatika
+  spasi
+  katakunci3 <- kataKunci
+  spasi
+  result <- tampilkan
+  if (katakunci1 == "pengulangan") then return $ concat [[END_BLOCK], result, [PENGULANGAN], jumlah] else return [DO_NOTHING]
+  <|> return [ERROR "ERROR: error occured in `pengulangan` statement"]
+

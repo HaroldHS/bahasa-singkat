@@ -1,4 +1,4 @@
-# Bahasa Singkat Interpreter
+# Bahasa Singkat Compiler
 
 Bahasa Singkat Compiler (BaSiCl) is a small compiler (JIT compiler) that compile Bahasa Singkat programming language from a given input/file.
 Bahasa Singkat Compiler works by parsing the input/file according to the BNF of Bahasa Singkat programming language, create bytecode/intermediate representation (IR) of it.
@@ -21,7 +21,7 @@ chmod +x ./build.sh
 ./build.sh build
 
 # 2. Compile a BaSing file with compiler artefact
-./artefacts/compiler program.basing result.bsr
+./artefacts/compiler example.basing result.bsr
 
 # 3. Run the bytecode file (.bsr file) with engine artefact
 ./artefacts/engine result.bsr

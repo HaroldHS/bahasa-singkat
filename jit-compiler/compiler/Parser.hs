@@ -2,6 +2,7 @@ module Parser where
 
 import Control.Applicative
 import Data.Bool
+import Data.Char
 
 {- Datatype for bytecode generation -}
 data Bytecode = RETURN | DO_NOTHING
@@ -21,9 +22,10 @@ data Bytecode = RETURN | DO_NOTHING
                        | LEBIH_KECIL
                        | LEBIH_BESAR
                        | SAMA_DENGAN
+                       | PENGULANGAN
                        | BENAR
                        | SALAH
-                       | END_IF
+                       | END_BLOCK
                        | ERROR String
                        deriving (Show, Eq)
 
@@ -83,20 +85,20 @@ alfabet c | c `elem` ['a' .. 'z'] = True
           | otherwise             = False
 
 -- Whitelisted characters for untaian (string)
-karakter c | c `elem` ['0' .. '9']                   = True
-           | c `elem` ['a' .. 'z']                   = True
-           | c `elem` ['A' .. 'Z']                   = True
-           | c `elem` [' ', ',', '.', '?', '!', '"'] = True
-           | otherwise                               = False
+karakter c | c == '\''                     = False 
+           | ord(c) >= 32 && ord(c) <= 126 = True
+           | otherwise                     = False
 
 -- Preserved keyword
-kata s | s == "tampilkan" = True
-       | s == "diberikan" = True
-       | s == "variabel"  = True
-       | s == "adalah"    = True
-       | s == "jika"      = True
-       | s == "maka"      = True
-       | otherwise        = False
+kata s | s == "tampilkan"   = True
+       | s == "diberikan"   = True
+       | s == "variabel"    = True
+       | s == "adalah"      = True
+       | s == "jika"        = True
+       | s == "maka"        = True
+       | s == "pengulangan" = True
+       | s == "sebanyak"    = True
+       | otherwise          = False
 
 -- Allowed characters for variable name
 karakterVariabel c | c `elem` ['a' .. 'z'] = True

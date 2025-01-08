@@ -88,8 +88,9 @@ func main () {
 	virtualMemory.bilangan = make(map[string]int)
 	virtualMemory.untaian  = make(map[string]string)
 
-	// Flag for conditional statement
+	// Flag for conditional statement and loop statement
 	bytecodeIsInsideIfStatementFlag := false
+	isInsideLoop := false
 
 	for _, content := range fileContents {
 		// Insert bytecode into virtual memory
@@ -98,7 +99,10 @@ func main () {
 		}
 		// When empty line encountered, it means the end of a single line BaSing code, so execute the line
 		if content == "" {
+			
 			var currentBytecodes []byte
+			numOfIterationBytecodes := []byte{} // for loop statement
+
 			for {
 				if virtualStack.isEmpty() {
 					break
@@ -108,6 +112,8 @@ func main () {
 				instruction, value := src.GetInstruction(result)
 				if status && !bytecodeIsInsideIfStatementFlag && (instruction == "RETURN") {
 
+					// TODO: handle 'tampilkan <arithmetic>' when inside a loop statement
+
 					returnBytecode   := src.CompileBytecodeToAssembly(instruction, "")
 					currentBytecodes := append(currentBytecodes, returnBytecode...)
 					result           := strconv.Itoa(src.ExecuteAssembly(currentBytecodes))
@@ -115,8 +121,14 @@ func main () {
 
 					nextInstructionStatus, nextInstructionValue := virtualStack.Pop()
 					if nextInstructionStatus && (nextInstructionValue == "TAMPILKAN_FROM_STACK") {
-						src.AssemblyPrintFunction(result)
-						currentBytecodes = currentBytecodes[:0]
+						
+						if isInsideLoop {
+							currentBytecodes = append(currentBytecodes, src.GetAssemblyOfPrintFunction(result)...)
+						} else {
+							src.AssemblyPrintFunction(result)
+							currentBytecodes = currentBytecodes[:0]
+						}
+
 					} else {
 						// Push the result into stack with "PUSH" bytecode
 						virtualStack.Push("PUSH " + result)
@@ -125,8 +137,12 @@ func main () {
 				} else if status && !bytecodeIsInsideIfStatementFlag && (instruction == "TAMPILKAN") {
 
 					stringValue := value[1:len(value)-1] // take the string value inside '
-					src.AssemblyPrintFunction(stringValue)
-					currentBytecodes = currentBytecodes[:0]
+					if isInsideLoop {
+						currentBytecodes = append(currentBytecodes, src.GetAssemblyOfPrintFunction(stringValue)...)
+					} else {
+						src.AssemblyPrintFunction(stringValue)
+						currentBytecodes = currentBytecodes[:0]
+					}
 
 				} else if status && !bytecodeIsInsideIfStatementFlag && ((instruction == "SET_VARIABEL_BILANGAN") || (instruction == "SET_VARIABEL_UNTAIAN")) {
 					
@@ -153,7 +169,7 @@ func main () {
 					if result == -1 {
 						fmt.Println("[-] Error: invalid comparison operation")
 						return
-					} else if result == 0 { // condition not met
+					} else if result == 0 { // condition not met, so skip/don't execute all bytecodes until END_BLOCK is found
 						bytecodeIsInsideIfStatementFlag = true
 					} else if result == 1 {
 						continue
@@ -164,12 +180,29 @@ func main () {
 
 					currentBytecodes = currentBytecodes[:0]
 
-				} else if status && (instruction == "END_IF") { // end of 'jika' statement, reset the flag
+				} else if status && (instruction == "PENGULANGAN") {
+
+					numOfIterationBytecodes = append(numOfIterationBytecodes, currentBytecodes...) // previous bytecode is for the counter
+					currentBytecodes = currentBytecodes[:0]     // empty current bytecodes container
+					isInsideLoop = true
+					_ = numOfIterationBytecodes                 // NOTE: this statement is just to bypass/remove 'decalred and not used' error warning
+
+				} else if status && (instruction == "END_BLOCK") { // end of block, such as 'jika' statement, reset the flag
+					
+					if isInsideLoop { // execute loop statement
+						isInsideLoop = false
+						src.AssemblyLoopingFunction(numOfIterationBytecodes, currentBytecodes)
+						numOfIterationBytecodes = numOfIterationBytecodes[:0]
+						currentBytecodes = currentBytecodes[:0]
+						continue
+					}
+
 					bytecodeIsInsideIfStatementFlag = false
+
 				} else if status && (instruction == "ERROR") {
 					
 					stringValue := value[1:len(value)-1]
-					fmt.Println(stringValue)
+					fmt.Printf("[-] Error: %s\n", stringValue)
 					return
 
 				} else {

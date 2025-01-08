@@ -8,16 +8,8 @@ bytecodeListToFile fn ls = do
   -- append an empty line to seperate the bytecodes of each line
   appendFile fn "\n"
 
---main :: IO()
+main :: IO()
 main = do
-  {-
-  putStr "\n[*] File name: "
-  fileName <- getLine
-  fileContent <- readFile fileName
-  putStr "[*] IR file name: "
-  outFileName <- getLine
-  -}
-
   args        <- getArgs
   fileContent <- readFile (head args)
 
