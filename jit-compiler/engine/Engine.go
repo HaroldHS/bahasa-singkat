@@ -89,7 +89,7 @@ func main () {
 	virtualMemory.untaian  = make(map[string]string)
 
 	// Flag for conditional statement and loop statement
-	bytecodeIsInsideIfStatementFlag := false
+	skipBytecodeBecauseConditionNotMetFlag := false
 	isInsideLoop := false
 
 	for _, content := range fileContents {
@@ -110,110 +110,110 @@ func main () {
 
 				status, result := virtualStack.Pop()
 				instruction, value := src.GetInstruction(result)
-				if status && !bytecodeIsInsideIfStatementFlag && (instruction == "RETURN") {
-
-					// TODO: handle 'tampilkan <arithmetic>' when inside a loop statement
-
-					returnBytecode   := src.CompileBytecodeToAssembly(instruction, "")
-					currentBytecodes := append(currentBytecodes, returnBytecode...)
-					result           := strconv.Itoa(src.ExecuteAssembly(currentBytecodes))
-					currentBytecodes = currentBytecodes[:0] // reset bytcode container after executing it
-
-					nextInstructionStatus, nextInstructionValue := virtualStack.Pop()
-					if nextInstructionStatus && (nextInstructionValue == "TAMPILKAN_FROM_STACK") {
+				if status && !skipBytecodeBecauseConditionNotMetFlag && !isInsideLoop {
+					if instruction == "RETURN" {
 						
-						if isInsideLoop {
-							currentBytecodes = append(currentBytecodes, src.GetAssemblyOfPrintFunction(result)...)
-						} else {
+						returnBytecode   := src.CompileBytecodeToAssembly(instruction, "")
+						currentBytecodes := append(currentBytecodes, returnBytecode...)
+						result           := strconv.Itoa(src.ExecuteAssembly(currentBytecodes))
+						currentBytecodes = currentBytecodes[:0] // reset bytcode container after executing it
+
+						nextInstructionStatus, nextInstructionValue := virtualStack.Pop()
+						if nextInstructionStatus && (nextInstructionValue == "TAMPILKAN_FROM_STACK") {
 							src.AssemblyPrintFunction(result)
 							currentBytecodes = currentBytecodes[:0]
+						} else {
+							// Push the result into stack with "PUSH" bytecode
+							virtualStack.Push("PUSH " + result)
 						}
 
-					} else {
-						// Push the result into stack with "PUSH" bytecode
-						virtualStack.Push("PUSH " + result)
-					}
+					} else if instruction == "TAMPILKAN" {
 
-				} else if status && !bytecodeIsInsideIfStatementFlag && (instruction == "TAMPILKAN") {
-
-					stringValue := value[1:len(value)-1] // take the string value inside '
-					if isInsideLoop {
-						currentBytecodes = append(currentBytecodes, src.GetAssemblyOfPrintFunction(stringValue)...)
-					} else {
+						stringValue := value[1:len(value)-1]    // take the string value inside '
 						src.AssemblyPrintFunction(stringValue)
 						currentBytecodes = currentBytecodes[:0]
-					}
 
-				} else if status && !bytecodeIsInsideIfStatementFlag && ((instruction == "SET_VARIABEL_BILANGAN") || (instruction == "SET_VARIABEL_UNTAIAN")) {
-					
-					pair := strings.SplitN(value, " ", 2)
-					pairKey, pairValue := pair[0], pair[1]
-					pairKey = pairKey[1:len(pairKey)-1]
+					} else if (instruction == "LEBIH_KECIL") || (instruction == "LEBIH_BESAR") || (instruction == "SAMA_DENGAN") {
 
-					if instruction == "SET_VARIABEL_BILANGAN" {
-						virtualMemory.InsertBilangan(pairKey, pairValue)
-					}
+						result := src.AssemblyComparisonFunction(instruction, currentBytecodes)
+						if result == -1 {
+							fmt.Println("[-] Error: invalid comparison operation")
+							return
+						} else if result == 0 {
+							// If condition not met, then skip/don't execute all bytecodes until END_BLOCK is found
+							skipBytecodeBecauseConditionNotMetFlag = true
+						} else if result == 1 {
+							continue
+						} else {
+							fmt.Println("[-] Error: unexpected error when performing comparison")
+							return
+						}
+						currentBytecodes = currentBytecodes[:0]
 
-				} else if status && !bytecodeIsInsideIfStatementFlag && ((instruction == "GET_VARIABEL_BILANGAN") || (instruction == "GET_VARIABEL_UNTAIAN")) {
-					
-					namaVariabel := value[1:len(value)-1]
+					} else if instruction == "PENGULANGAN" {
 
-					if instruction == "GET_VARIABEL_BILANGAN" {
-						virtualStack.Push("PUSH " + strconv.Itoa(virtualMemory.bilangan[namaVariabel]))
-					}
+						isInsideLoop = true
+						numOfIterationBytecodes = append(
+							numOfIterationBytecodes, currentBytecodes... // change previous bytecodes as bytecodes for counter
+						)
+						currentBytecodes = currentBytecodes[:0]              // empty current bytecodes container
+						_ = numOfIterationBytecodes                          // NOTE: this statement is just to bypass/remove 'decalred and not used' error warning
 
-				} else if status && !bytecodeIsInsideIfStatementFlag && ((instruction == "LEBIH_KECIL") || (instruction == "LEBIH_BESAR") || (instruction == "SAMA_DENGAN")) {
-					
-					result := src.AssemblyComparisonFunction(instruction, currentBytecodes)
+					} else if (instruction == "SET_VARIABEL_BILANGAN") || (instruction == "SET_VARIABEL_UNTAIAN") {
 
-					if result == -1 {
-						fmt.Println("[-] Error: invalid comparison operation")
-						return
-					} else if result == 0 { // condition not met, so skip/don't execute all bytecodes until END_BLOCK is found
-						bytecodeIsInsideIfStatementFlag = true
-					} else if result == 1 {
-						continue
+						pair := strings.SplitN(value, " ", 2)
+						pairKey, pairValue := pair[0], pair[1]
+						pairKey = pairKey[1:len(pairKey)-1]
+
+						if instruction == "SET_VARIABEL_BILANGAN" {
+							virtualMemory.InsertBilangan(pairKey, pairValue)
+						}
+						// TODO: condition for SET_VARIABEL_UNTAIAN
+
+					} else if (instruction == "GET_VARIABEL_BILANGAN") || (instruction == "GET_VARIABEL_UNTAIAN") {
+						
+						namaVariabel := value[1:len(value)-1]
+						if instruction == "GET_VARIABEL_BILANGAN" {
+							virtualStack.Push("PUSH " + strconv.Itoa(virtualMemory.bilangan[namaVariabel]))
+						}
+						// TODO: condition for GET_VARIABEL_UNTAIAN
+
 					} else {
-						fmt.Println("[-] Error: unexpected error when performing comparison")
-						return
+						currentBytecodes = append(currentBytecodes, src.CompileBytecodeToAssembly(instruction, value)...)
 					}
+				}
 
-					currentBytecodes = currentBytecodes[:0]
+				if status && skipBytecodeBecauseConditionNotMetFlag && !isInsideLoop {
+					if instruction == "END_BLOCK" {
+						skipBytecodeBecauseConditionNotMetFlag = false
+					}
+					continue
+				}
 
-				} else if status && (instruction == "PENGULANGAN") {
-
-					numOfIterationBytecodes = append(numOfIterationBytecodes, currentBytecodes...) // previous bytecode is for the counter
-					currentBytecodes = currentBytecodes[:0]     // empty current bytecodes container
-					isInsideLoop = true
-					_ = numOfIterationBytecodes                 // NOTE: this statement is just to bypass/remove 'decalred and not used' error warning
-
-				} else if status && (instruction == "END_BLOCK") { // end of block, such as 'jika' statement, reset the flag
-					
-					if isInsideLoop { // execute loop statement
+				if status && !skipBytecodeBecauseConditionNotMetFlag && isInsideLoop {
+					if instruction == "END_BLOCK" {
 						isInsideLoop = false
 						src.AssemblyLoopingFunction(numOfIterationBytecodes, currentBytecodes)
 						numOfIterationBytecodes = numOfIterationBytecodes[:0]
 						currentBytecodes = currentBytecodes[:0]
-						continue
-					}
-
-					bytecodeIsInsideIfStatementFlag = false
-
-				} else if status && (instruction == "ERROR") {
-					
-					stringValue := value[1:len(value)-1]
-					fmt.Printf("[-] Error: %s\n", stringValue)
-					return
-
-				} else {
-
-					if !bytecodeIsInsideIfStatementFlag {
-						currentBytecodes = append(currentBytecodes, src.CompileBytecodeToAssembly(instruction, value)...)
+					} else if instruction == "TAMPILKAN" {
+						stringValue := value[1:len(value)-1]
+						currentBytecodes = append(currentBytecodes, src.GetAssemblyOfPrintFunction(stringValue)...)
 					} else {
-						continue
+						currentBytecodes = append(currentBytecodes, src.CompileBytecodeToAssembly(instruction, value)...)
 					}
-
 				}
+
+				if status && (instruction == "ERROR") {
+					fmt.Printf("[-] Error: %s\n", value[1:len(value)-1])
+					return
+				}
+
+				if !status {
+					fmt.Println("[-] Error: unexpected error when obtaining instruction from virtual stack")
+					return
+				}
+
 			}
 		}
 	}
