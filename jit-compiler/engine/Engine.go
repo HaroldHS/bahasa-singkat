@@ -168,7 +168,9 @@ func main () {
 						if instruction == "SET_VARIABEL_BILANGAN" {
 							virtualMemory.InsertBilangan(pairKey, pairValue)
 						}
-						// TODO: condition for SET_VARIABEL_UNTAIAN
+						if instruction == "SET_VARIABEL_UNTAIAN" {
+							virtualMemory.InsertUntaian(pairKey, pairValue[1:len(pairValue)-1])
+						}
 
 					} else if (instruction == "GET_VARIABEL_BILANGAN") || (instruction == "GET_VARIABEL_UNTAIAN") {
 						
@@ -184,23 +186,71 @@ func main () {
 				}
 
 				if status && skipBytecodeBecauseConditionNotMetFlag && !isInsideLoop {
-					if instruction == "END_BLOCK" {
+					if instruction == "END_JIKA_BLOCK" {
 						skipBytecodeBecauseConditionNotMetFlag = false
 					}
 					continue
 				}
 
 				if status && !skipBytecodeBecauseConditionNotMetFlag && isInsideLoop {
-					if instruction == "END_BLOCK" {
+					if instruction == "END_PENGULANGAN_BLOCK" {
+
 						isInsideLoop = false
 						src.AssemblyLoopingFunction(numOfIterationBytecodes, currentBytecodes)
 						numOfIterationBytecodes = numOfIterationBytecodes[:0]
 						currentBytecodes = currentBytecodes[:0]
+
 					} else if instruction == "TAMPILKAN" {
+
 						stringValue := value[1:len(value)-1]
 						currentBytecodes = append(currentBytecodes, src.GetAssemblyOfPrintFunction(stringValue)...)
+					
+					/*}
+
+					else if instruction == "RETURN" {
+
+						// NOTE: This block is intended for printing arithmetic result
+						nextInstructionStatus, nextInstructionValue := virtualStack.Pop()
+						if nextInstructionStatus && (nextInstructionValue == "TAMPILKAN_FROM_STACK") {
+							// TODO: Obtain last value from stack and print generate the output
+							continue
+						}
+
+					}
+					else if instruction == "GET_VARIABEL_BILANGAN" {
+
+						namaVariabel := value[1:len(value)-1]
+						currentBytecodes = append(
+							currentBytecodes,
+							src.CompileBytecodeToAssembly(
+								"PUSH",
+								strconv.Itoa(virtualMemory.bilangan[namaVariabel]),
+							)...,
+						)
+
+					}*/
+
+					} else if instruction == "GET_VARIABEL_UNTAIAN" { // tampilkan variabel untaian '....'
+
+						namaVariabel := value[1:len(value)-1]
+						nextInstructionStatus, nextInstructionValue := virtualStack.Pop()
+						nextNextInstructionStatus, nextNextInstructionValue := virtualStack.Pop()
+
+						if (nextInstructionStatus && nextNextInstructionStatus) && (nextInstructionValue == "RETURN" && nextNextInstructionValue == "TAMPILKAN_FROM_STACK") {
+							stringValue := virtualMemory.untaian[namaVariabel]
+							currentBytecodes = append(currentBytecodes, src.GetAssemblyOfPrintFunction(stringValue)...)
+						}
+
 					} else {
 						currentBytecodes = append(currentBytecodes, src.CompileBytecodeToAssembly(instruction, value)...)
+					}
+				}
+
+				if status && (instruction == "DO_NOTHING") {
+					if isInsideLoop {
+						currentBytecodes = append(currentBytecodes, src.CompileBytecodeToAssembly("DO_NOTHING", "")...)
+					} else {
+						continue
 					}
 				}
 

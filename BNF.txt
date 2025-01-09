@@ -13,16 +13,17 @@ Backus-Naur Form (BNF) of bahasa-singkat
 <bilangan asli>       ::= <angka> | <bilangan asli>
 <bilangan bulat>      ::= "-"<bilangan asli> | <bilangan asli>
 
-<variabel>            ::= "variabel" <alfabet>
+<variabel bilangan>   ::= "variabel" "bilangan" <alfabet>
+<variabel untaian>    ::= "variabel" "untaian" <alfabet>
 
-<arithmetic>          ::= <bilangan bulat> <operator> <bilangan bulat> | <variabel> <operator> <bilangan bulat>
-                                                                       | <bilangan bulat> <operator> <variabel>
-                                                                       | <variabel> <operator> <variabel>
+<arithmetic>          ::= <bilangan bulat> <operator> <bilangan bulat> | <variabel bilangan> <operator> <bilangan bulat>
+                                                                       | <bilangan bulat> <operator> <variabel bilangan>
+                                                                       | <variabel bilangan> <operator> <variabel bilangan>
 
 <boolean>             ::= <arithmetic> "<" <arithmetic> | <arithmetic> ">" <arithmetic>
                                                         | <arithmetic> "=" <arithmetic>
 
-<print statement>     ::= "tampilkan" <untaian> | "tampilkan" <arithmetic>
+<print statement>     ::= "tampilkan" <untaian> | "tampilkan" <arithmetic> | "tampilkan" <variabel untaian>
 <variable assignment> ::=  "diberikan" <untaian> "adalah" <bilangan bulat> | "diberikan" <untaian> "adalah" <untaian>
 <condition>           ::= "jika" <boolean> "maka" <print statement>
 <loop>                ::= "pengulangan" "sebanyak" <arithmetic> "maka" <print statement>

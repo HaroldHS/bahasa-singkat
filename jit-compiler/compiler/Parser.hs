@@ -25,7 +25,9 @@ data Bytecode = RETURN | DO_NOTHING
                        | PENGULANGAN
                        | BENAR
                        | SALAH
-                       | END_BLOCK
+                       | BREAK_POINT_DEBUG
+                       | END_JIKA_BLOCK
+                       | END_PENGULANGAN_BLOCK
                        | ERROR String
                        deriving (Show, Eq)
 
@@ -93,6 +95,8 @@ karakter c | c == '\''                     = False
 kata s | s == "tampilkan"   = True
        | s == "diberikan"   = True
        | s == "variabel"    = True
+       | s == "bilangan"    = True
+       | s == "untaian"     = True
        | s == "adalah"      = True
        | s == "jika"        = True
        | s == "maka"        = True

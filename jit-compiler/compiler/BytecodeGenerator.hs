@@ -94,13 +94,15 @@ factor = do
   satisfy (==')')
   return [PUSH result]
   <|> do
-  katakunci <- kataKunci
-  spasi
-  namavariabel <- namaVariabel
-  if katakunci == "variabel" then return [GET_VARIABEL_BILANGAN namavariabel] else return [DO_NOTHING]
-  <|> do
   result <- bilanganAsli
   return [PUSH result]
+  <|> do
+  katakunci1 <- kataKunci
+  spasi
+  katakunci2 <- kataKunci
+  spasi
+  namavariabel <- namaVariabel
+  if (katakunci1 == "variabel") && (katakunci2 == "bilangan") then return [GET_VARIABEL_BILANGAN namavariabel] else return [DO_NOTHING]
 
 aritmatika :: Parser [Bytecode]
 aritmatika = do
@@ -155,7 +157,7 @@ boolean = do
 
 tampilkan :: Parser [Bytecode]
 tampilkan = do
-  perintah <- kataKunci  
+  perintah <- kataKunci
   spasi
   s <- untaian
   if perintah == "tampilkan" then return [TAMPILKAN s] else return [DO_NOTHING]
@@ -165,19 +167,22 @@ tampilkan = do
   result <- aritmatika
   if perintah == "tampilkan" then return $ concat [[TAMPILKAN_FROM_STACK, RETURN], result] else return [DO_NOTHING]
   <|> do
-  perintah <- kataKunci
+  perintah <- kataKunci  
   spasi
-  perintah2 <- kataKunci
+  katakunci1 <- kataKunci
   spasi
+  -- TODO: Fix the error due to commented codes below
+  {-
+  katakunci2 <- kataKunci
+  spasi
+  -}
   namavariabel <- namaVariabel
-  if (perintah == "tampilkan") && (perintah2 == "variabel") then return [TAMPILKAN namavariabel] else return [DO_NOTHING]
+  if (perintah == "tampilkan") && (katakunci1 == "variabel") {-&& (katakunci2 == "untaian")-} then return [TAMPILKAN_FROM_STACK, RETURN, GET_VARIABEL_UNTAIAN namavariabel] else return [DO_NOTHING]
   <|> return [ERROR "ERROR: error occured in `tampilkan` statement"]
 
 
 variabel :: Parser [Bytecode]
 variabel = do
-  -- TODO: Fix collision below
-  {-
   katakunci1 <- kataKunci
   spasi
   namavariabel <- some (satisfy alfabet)
@@ -187,7 +192,6 @@ variabel = do
   s <- untaian
   if (katakunci1 == "diberikan") && (katakunci2 == "adalah") then return [SET_VARIABEL_UNTAIAN namavariabel s] else return [DO_NOTHING]
   <|> do
-  -}
   katakunci1 <- kataKunci
   spasi
   namavariabel <- namaVariabel
@@ -208,7 +212,7 @@ kondisi = do
   katakunci2 <- kataKunci
   spasi
   result <- tampilkan
-  if (katakunci1 == "jika") && (katakunci2 == "maka") then return $ concat [[END_BLOCK], result, bool] else return [DO_NOTHING]
+  if (katakunci1 == "jika") && (katakunci2 == "maka") then return $ concat [[END_JIKA_BLOCK], result, bool] else return [DO_NOTHING]
   <|> return [ERROR "ERROR: error occured in `jika` statement"]
 
 pengulangan :: Parser [Bytecode]
@@ -222,6 +226,6 @@ pengulangan = do
   katakunci3 <- kataKunci
   spasi
   result <- tampilkan
-  if (katakunci1 == "pengulangan") then return $ concat [[END_BLOCK], result, [PENGULANGAN], jumlah] else return [DO_NOTHING]
+  if (katakunci1 == "pengulangan") then return $ concat [[END_PENGULANGAN_BLOCK], result, [PENGULANGAN], jumlah] else return [DO_NOTHING]
   <|> return [ERROR "ERROR: error occured in `pengulangan` statement"]
 
