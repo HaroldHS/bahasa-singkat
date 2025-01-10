@@ -12,4 +12,4 @@ Compiler (JIT compiler) and Interpreter are provided in order to give a better c
 * Linux x86-64
 
 ### Installation
-No additional installation is needed since the program is intended to be written from scratch (only using the default libraries from GHCI & Golang).
+No additional installation is needed since the program is intended to be written from scratch (only using the default libraries from GHC & Golang).

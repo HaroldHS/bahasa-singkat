@@ -1,8 +1,24 @@
 diberikan nama adalah 'test'
 diberikan umur adalah 24
+
 tampilkan 'Hello, World!'
-tampilkan variabel bilangan umur - 2 * 3
-pengulangan sebanyak 10 maka tampilkan variabel nama
-pengulangan sebanyak variabel bilangan umur maka tampilkan 'LOOP'
-jika variabel bilangan umur = 24 maka tampilkan 'Masih muda'
-jika variabel bilangan umur < 15 maka tampilkan 'Dibawah umur'
+tampilkan 1 * variabel bilangan umur + 6
+tampilkan variabel nama
+
+jika variabel bilangan umur = 24 maka mulai
+tampilkan 'Umur anda 24 tahun'
+tampilkan 'Anda masuk kategori cukup umur'
+berhentikan jika
+
+jika variabel bilangan umur < 15 maka mulai
+tampilkan 'Umur anda dibawah 15 tahun'
+tampilkan 'Anda masuk kategori dibawah umur'
+berhentikan jika
+
+tampilkan ' '
+tampilkan '+------------------------------+'
+tampilkan '| Ulangi nama sebanyak 10 kali |'
+tampilkan '+------------------------------+'
+pengulangan sebanyak 10 maka mulai
+tampilkan 'test'
+berhentikan pengulangan

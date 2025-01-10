@@ -65,7 +65,7 @@ func (m *VirtualMemory) DeleteUntaian(key string) {
 
 /* Program entry point */
 func main () {
-	fileName := os.Args[1]
+	fileName         := os.Args[1]
 	filePointer, err := os.Open(fileName)
 	defer filePointer.Close() // auto close file when main returns/done
 
@@ -88,20 +88,24 @@ func main () {
 	virtualMemory.bilangan = make(map[string]int)
 	virtualMemory.untaian  = make(map[string]string)
 
-	// Flag for conditional statement and loop statement
-	skipBytecodeBecauseConditionNotMetFlag := false
-	isInsideLoop := false
+	// Flags for conditional statement and loop statement
+	ifConditionNotMet := false
+	isInsideIfBlock   := false
+	isInsideLoopBlock := false
+
+	// Variables to save all bytecodes regarding loop statement as if bytecodes in 'if content == ""' would be removed due to out of scope
+	loopStatementBytecodes  := []byte{}
+	numOfIterationBytecodes := []byte{}
 
 	for _, content := range fileContents {
 		// Insert bytecode into virtual memory
 		if (content != "") && (content != "DO_NOTHING") {
 			virtualStack.Push(content)
 		}
+
 		// When empty line encountered, it means the end of a single line BaSing code, so execute the line
 		if content == "" {
-			
 			var currentBytecodes []byte
-			numOfIterationBytecodes := []byte{} // for loop statement
 
 			for {
 				if virtualStack.isEmpty() {
@@ -110,160 +114,151 @@ func main () {
 
 				status, result := virtualStack.Pop()
 				instruction, value := src.GetInstruction(result)
-				if status && !skipBytecodeBecauseConditionNotMetFlag && !isInsideLoop {
+				if status && !isInsideIfBlock && !isInsideLoopBlock {
 					if instruction == "RETURN" {
-						
 						returnBytecode   := src.CompileBytecodeToAssembly(instruction, "")
 						currentBytecodes := append(currentBytecodes, returnBytecode...)
 						result           := strconv.Itoa(src.ExecuteAssembly(currentBytecodes))
-						currentBytecodes = currentBytecodes[:0] // reset bytcode container after executing it
+						currentBytecodes  = currentBytecodes[:0] // reset bytecode slice after executing it
 
 						nextInstructionStatus, nextInstructionValue := virtualStack.Pop()
 						if nextInstructionStatus && (nextInstructionValue == "TAMPILKAN_FROM_STACK") {
 							src.AssemblyPrintFunction(result)
-							currentBytecodes = currentBytecodes[:0]
-						} else {
-							// Push the result into stack with "PUSH" bytecode
-							virtualStack.Push("PUSH " + result)
+						} else if nextInstructionStatus {
+							virtualStack.Push("PUSH " + result) // push the result onto the stack with "PUSH" bytecode
 						}
-
 					} else if instruction == "TAMPILKAN" {
 
-						stringValue := value[1:len(value)-1]    // take the string value inside '
+						stringValue := value[1 : len(value)-1]  // take the string value inside '
 						src.AssemblyPrintFunction(stringValue)
 						currentBytecodes = currentBytecodes[:0]
 
-					} else if (instruction == "LEBIH_KECIL") || (instruction == "LEBIH_BESAR") || (instruction == "SAMA_DENGAN") {
-
-						result := src.AssemblyComparisonFunction(instruction, currentBytecodes)
-						if result == -1 {
-							fmt.Println("[-] Error: invalid comparison operation")
-							return
-						} else if result == 0 {
-							// If condition not met, then skip/don't execute all bytecodes until END_BLOCK is found
-							skipBytecodeBecauseConditionNotMetFlag = true
-						} else if result == 1 {
-							continue
-						} else {
-							fmt.Println("[-] Error: unexpected error when performing comparison")
-							return
-						}
-						currentBytecodes = currentBytecodes[:0]
-
-					} else if instruction == "PENGULANGAN" {
-
-						isInsideLoop = true
-						numOfIterationBytecodes = append(
-							numOfIterationBytecodes, currentBytecodes... // change previous bytecodes as bytecodes for counter
-						)
-						currentBytecodes = currentBytecodes[:0]              // empty current bytecodes container
-						_ = numOfIterationBytecodes                          // NOTE: this statement is just to bypass/remove 'decalred and not used' error warning
-
 					} else if (instruction == "SET_VARIABEL_BILANGAN") || (instruction == "SET_VARIABEL_UNTAIAN") {
-
-						pair := strings.SplitN(value, " ", 2)
+						pair               := strings.SplitN(value, " ", 2)
 						pairKey, pairValue := pair[0], pair[1]
-						pairKey = pairKey[1:len(pairKey)-1]
+						pairKey             = pairKey[1 : len(pairKey)-1] // obtain key inside '
 
 						if instruction == "SET_VARIABEL_BILANGAN" {
 							virtualMemory.InsertBilangan(pairKey, pairValue)
 						}
 						if instruction == "SET_VARIABEL_UNTAIAN" {
-							virtualMemory.InsertUntaian(pairKey, pairValue[1:len(pairValue)-1])
+							virtualMemory.InsertUntaian(pairKey, pairValue[1 : len(pairValue)-1])
 						}
-
 					} else if (instruction == "GET_VARIABEL_BILANGAN") || (instruction == "GET_VARIABEL_UNTAIAN") {
-						
-						namaVariabel := value[1:len(value)-1]
+						namaVariabel := value[1 : len(value)-1]
+
 						if instruction == "GET_VARIABEL_BILANGAN" {
 							virtualStack.Push("PUSH " + strconv.Itoa(virtualMemory.bilangan[namaVariabel]))
 						}
-						// TODO: condition for GET_VARIABEL_UNTAIAN
+						if instruction == "GET_VARIABEL_UNTAIAN" {
+							namaVariabel := value[1 : len(value)-1]
+							nextInstructionStatus, nextInstructionValue := virtualStack.Pop()
+							nextNextInstructionStatus, nextNextInstructionValue := virtualStack.Pop()
+							
+							if (nextInstructionStatus && nextNextInstructionStatus) && (nextInstructionValue == "RETURN" && nextNextInstructionValue == "TAMPILKAN_FROM_STACK") {
+								stringValue     := virtualMemory.untaian[namaVariabel]
+								src.AssemblyPrintFunction(stringValue)
+							} else {
+								virtualStack.Push(nextNextInstructionValue)
+								virtualStack.Push(nextInstructionValue)
+							}
+						}
+					} else if (instruction == "LEBIH_KECIL") || (instruction == "LEBIH_BESAR") || (instruction == "SAMA_DENGAN") {
+						nextInstructionStatus, nextInstructionValue := virtualStack.Pop()
 
+						if nextInstructionStatus && (nextInstructionValue == "START_JIKA_BLOCK") {
+							result := src.AssemblyComparisonFunction(instruction, currentBytecodes)
+
+							if result == 0 {
+								// if condition not met, then skip/don't execute all bytecodes until END_JIKA_BLOCK is found
+								ifConditionNotMet = true
+								isInsideIfBlock   = true
+							} else if result == 1{
+								isInsideIfBlock = true
+							} else if result == -1 {
+								fmt.Println("[-] Error: invalid comparison operation")
+								return
+							} else {
+								fmt.Println("[-] Error: unexpected error when performing comparison")
+								return
+							}
+						} else {
+							virtualStack.Push(nextInstructionValue)
+						}
+
+						currentBytecodes = currentBytecodes[:0]
+					} else if instruction == "PENGULANGAN"{
+						nextInstructionStatus, nextInstructionValue := virtualStack.Pop()
+						
+						if nextInstructionStatus && (nextInstructionValue == "START_PENGULANGAN_BLOCK") {
+							isInsideLoopBlock = true
+						
+							// change previous bytecodes as bytecodes for counter
+							numOfIterationBytecodes = append(numOfIterationBytecodes, currentBytecodes...)
+							_ = numOfIterationBytecodes // NOTE: this statement is intended to bypass/remove 'declared and not used' error/warning
+							currentBytecodes = currentBytecodes[:0]
+							continue
+						} else {
+							virtualStack.Push(nextInstructionValue)
+						}
 					} else {
 						currentBytecodes = append(currentBytecodes, src.CompileBytecodeToAssembly(instruction, value)...)
 					}
 				}
 
-				if status && skipBytecodeBecauseConditionNotMetFlag && !isInsideLoop {
+				if status && isInsideIfBlock && !isInsideLoopBlock {
 					if instruction == "END_JIKA_BLOCK" {
-						skipBytecodeBecauseConditionNotMetFlag = false
+						isInsideIfBlock = false
+						continue
 					}
-					continue
+
+					if !ifConditionNotMet {
+						if instruction == "TAMPILKAN" {
+							stringValue := value[1 : len(value)-1]  // take the string value inside '
+							src.AssemblyPrintFunction(stringValue)
+							currentBytecodes = currentBytecodes[:0]
+						}
+					}
 				}
 
-				if status && !skipBytecodeBecauseConditionNotMetFlag && isInsideLoop {
+				if status && !isInsideIfBlock && isInsideLoopBlock {
 					if instruction == "END_PENGULANGAN_BLOCK" {
-
-						isInsideLoop = false
-						src.AssemblyLoopingFunction(numOfIterationBytecodes, currentBytecodes)
+						src.AssemblyLoopingFunction(numOfIterationBytecodes, loopStatementBytecodes)
+						isInsideLoopBlock       = false
 						numOfIterationBytecodes = numOfIterationBytecodes[:0]
-						currentBytecodes = currentBytecodes[:0]
-
-					} else if instruction == "TAMPILKAN" {
-
-						stringValue := value[1:len(value)-1]
-						currentBytecodes = append(currentBytecodes, src.GetAssemblyOfPrintFunction(stringValue)...)
-					
-					/*}
-
-					else if instruction == "RETURN" {
-
-						// NOTE: This block is intended for printing arithmetic result
-						nextInstructionStatus, nextInstructionValue := virtualStack.Pop()
-						if nextInstructionStatus && (nextInstructionValue == "TAMPILKAN_FROM_STACK") {
-							// TODO: Obtain last value from stack and print generate the output
-							continue
-						}
-
+						loopStatementBytecodes  = loopStatementBytecodes[:0]
 					}
-					else if instruction == "GET_VARIABEL_BILANGAN" {
 
-						namaVariabel := value[1:len(value)-1]
-						currentBytecodes = append(
-							currentBytecodes,
-							src.CompileBytecodeToAssembly(
-								"PUSH",
-								strconv.Itoa(virtualMemory.bilangan[namaVariabel]),
-							)...,
-						)
-
-					}*/
-
-					} else if instruction == "GET_VARIABEL_UNTAIAN" { // tampilkan variabel untaian '....'
-
-						namaVariabel := value[1:len(value)-1]
+					// cases for bytecodes inside loop block
+					if instruction == "TAMPILKAN" {
+						loopStatementBytecodes = append(loopStatementBytecodes, src.GetAssemblyOfPrintFunction(value[1 : len(value)-1])...)
+					} else if instruction == "GET_VARIABEL_UNTAIAN" { // tampilkan variabel untaian '...'
+						namaVariabel := value[1 : len(value)-1]
 						nextInstructionStatus, nextInstructionValue := virtualStack.Pop()
 						nextNextInstructionStatus, nextNextInstructionValue := virtualStack.Pop()
 
 						if (nextInstructionStatus && nextNextInstructionStatus) && (nextInstructionValue == "RETURN" && nextNextInstructionValue == "TAMPILKAN_FROM_STACK") {
-							stringValue := virtualMemory.untaian[namaVariabel]
-							currentBytecodes = append(currentBytecodes, src.GetAssemblyOfPrintFunction(stringValue)...)
+							stringValue     := virtualMemory.untaian[namaVariabel]
+							loopStatementBytecodes = append(loopStatementBytecodes, src.GetAssemblyOfPrintFunction(stringValue)...)
 						}
-
 					} else {
-						currentBytecodes = append(currentBytecodes, src.CompileBytecodeToAssembly(instruction, value)...)
-					}
-				}
-
-				if status && (instruction == "DO_NOTHING") {
-					if isInsideLoop {
-						currentBytecodes = append(currentBytecodes, src.CompileBytecodeToAssembly("DO_NOTHING", "")...)
-					} else {
-						continue
+						loopStatementBytecodes = append(loopStatementBytecodes, src.CompileBytecodeToAssembly(instruction, value)...)
 					}
 				}
 
 				if status && (instruction == "ERROR") {
-					fmt.Printf("[-] Error: %s\n", value[1:len(value)-1])
+					fmt.Printf("[-] Error: %s\n", value[1 : len(value)-1])
 					return
+				}
+
+				if status && (instruction == "DO_NOTHING") {
+					continue
 				}
 
 				if !status {
-					fmt.Println("[-] Error: unexpected error when obtaining instruction from virtual stack")
+					fmt.Println("[-] Error: unexpected error")
 					return
 				}
-
 			}
 		}
 	}

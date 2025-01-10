@@ -24,6 +24,13 @@ Backus-Naur Form (BNF) of bahasa-singkat
                                                         | <arithmetic> "=" <arithmetic>
 
 <print statement>     ::= "tampilkan" <untaian> | "tampilkan" <arithmetic> | "tampilkan" <variabel untaian>
+
 <variable assignment> ::=  "diberikan" <untaian> "adalah" <bilangan bulat> | "diberikan" <untaian> "adalah" <untaian>
-<condition>           ::= "jika" <boolean> "maka" <print statement>
-<loop>                ::= "pengulangan" "sebanyak" <arithmetic> "maka" <print statement>
+
+<condition>           ::= "jika" <boolean> "maka" "mulai"
+                          <print statement>
+                          "berhentikan" "jika"
+
+<loop>                ::= "pengulangan" "sebanyak" <arithmetic> "maka" "mulai"
+                          <print statement>
+                          "berhentikan" "pengulangan"

@@ -13,7 +13,7 @@ main = do
   args        <- getArgs
   fileContent <- readFile (head args)
 
-  let results = map (\input -> getParserResult $ generate input) (lines fileContent)
+  let results = map (\input -> getParserResult $ generate input) (filter (/= "") (lines fileContent))
   mapM_ (\each_bytecode -> if each_bytecode /= [] then bytecodeListToFile (head (tail args)) each_bytecode else appendFile (head (tail args)) "") results
 
   return ()

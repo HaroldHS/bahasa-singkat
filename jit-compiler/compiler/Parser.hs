@@ -22,12 +22,14 @@ data Bytecode = RETURN | DO_NOTHING
                        | LEBIH_KECIL
                        | LEBIH_BESAR
                        | SAMA_DENGAN
+                       | START_JIKA_BLOCK
+                       | END_JIKA_BLOCK
                        | PENGULANGAN
+                       | START_PENGULANGAN_BLOCK
+                       | END_PENGULANGAN_BLOCK
                        | BENAR
                        | SALAH
                        | BREAK_POINT_DEBUG
-                       | END_JIKA_BLOCK
-                       | END_PENGULANGAN_BLOCK
                        | ERROR String
                        deriving (Show, Eq)
 
@@ -101,6 +103,8 @@ kata s | s == "tampilkan"   = True
        | s == "jika"        = True
        | s == "maka"        = True
        | s == "pengulangan" = True
+       | s == "mulai"       = True
+       | s == "berhentikan" = True
        | s == "sebanyak"    = True
        | otherwise          = False
 

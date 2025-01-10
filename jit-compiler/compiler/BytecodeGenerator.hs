@@ -29,6 +29,8 @@ generate = \input -> do
     parse (kondisi) input
   else if (getFirstWord input) == "pengulangan" then
     parse (pengulangan) input
+  else if (getFirstWord input) == "berhentikan" then
+    parse (akhirBlok) input
   else
     parse (aritmatika) input
 
@@ -162,22 +164,22 @@ tampilkan = do
   s <- untaian
   if perintah == "tampilkan" then return [TAMPILKAN s] else return [DO_NOTHING]
   <|> do
-  perintah <- kataKunci
-  spasi
-  result <- aritmatika
-  if perintah == "tampilkan" then return $ concat [[TAMPILKAN_FROM_STACK, RETURN], result] else return [DO_NOTHING]
-  <|> do
   perintah <- kataKunci  
   spasi
   katakunci1 <- kataKunci
   spasi
-  -- TODO: Fix the error due to commented codes below
+  -- TODO: Fix error from the commented codes below
   {-
   katakunci2 <- kataKunci
   spasi
   -}
   namavariabel <- namaVariabel
   if (perintah == "tampilkan") && (katakunci1 == "variabel") {-&& (katakunci2 == "untaian")-} then return [TAMPILKAN_FROM_STACK, RETURN, GET_VARIABEL_UNTAIAN namavariabel] else return [DO_NOTHING]
+  <|> do
+  perintah <- kataKunci
+  spasi
+  result <- aritmatika
+  if perintah == "tampilkan" then return $ concat [[TAMPILKAN_FROM_STACK, RETURN], result] else return [DO_NOTHING]
   <|> return [ERROR "ERROR: error occured in `tampilkan` statement"]
 
 
@@ -205,6 +207,7 @@ variabel = do
 
 kondisi :: Parser [Bytecode]
 kondisi = do
+  {-
   katakunci1 <- kataKunci
   spasi
   bool <- boolean
@@ -213,10 +216,21 @@ kondisi = do
   spasi
   result <- tampilkan
   if (katakunci1 == "jika") && (katakunci2 == "maka") then return $ concat [[END_JIKA_BLOCK], result, bool] else return [DO_NOTHING]
+  <|> do
+  -}
+  katakunci1 <- kataKunci
+  spasi
+  bool <- boolean
+  spasi
+  katakunci2 <- kataKunci
+  spasi
+  katakunci3 <- kataKunci
+  if (katakunci1 == "jika") && (katakunci2 == "maka") && (katakunci3 == "mulai") then return $ concat [[START_JIKA_BLOCK], bool] else return [DO_NOTHING]
   <|> return [ERROR "ERROR: error occured in `jika` statement"]
 
 pengulangan :: Parser [Bytecode]
 pengulangan = do
+  {-
   katakunci1 <- kataKunci
   spasi
   katakunci2 <- kataKunci
@@ -226,6 +240,33 @@ pengulangan = do
   katakunci3 <- kataKunci
   spasi
   result <- tampilkan
-  if (katakunci1 == "pengulangan") then return $ concat [[END_PENGULANGAN_BLOCK], result, [PENGULANGAN], jumlah] else return [DO_NOTHING]
+  if (katakunci1 == "pengulangan") && (katakunci2 == "sebanyak") && (katakunci3 == "maka") then return $ concat [[END_PENGULANGAN_BLOCK], result, [PENGULANGAN], jumlah] else return [DO_NOTHING]
+  <|> do
+  -}
+  katakunci1 <- kataKunci
+  spasi
+  katakunci2 <- kataKunci
+  spasi
+  jumlah <- aritmatika
+  spasi
+  katakunci3  <- kataKunci
+  spasi
+  katakunci4 <- kataKunci
+  if (katakunci1 == "pengulangan") && (katakunci2 == "sebanyak") && (katakunci3 == "maka") && (katakunci4 == "mulai") then
+    return $ concat [[START_PENGULANGAN_BLOCK, PENGULANGAN], jumlah]
+  else
+    return [DO_NOTHING]
   <|> return [ERROR "ERROR: error occured in `pengulangan` statement"]
 
+akhirBlok :: Parser [Bytecode]
+akhirBlok = do
+  katakunci1 <- kataKunci
+  spasi
+  katakunci2 <- kataKunci
+  if (katakunci1 == "berhentikan") && (katakunci2 == "jika") then
+    return [END_JIKA_BLOCK]
+  else if (katakunci1 == "berhentikan") && (katakunci2 == "pengulangan") then
+    return [END_PENGULANGAN_BLOCK]
+  else
+    return [DO_NOTHING]
+  <|> return [ERROR "ERROR: error occured in code block"]
